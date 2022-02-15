@@ -1,6 +1,7 @@
 # spot check machine learning algorithms on the german credit dataset
 from sklearn.metrics import fbeta_score, roc_auc_score, make_scorer, balanced_accuracy_score, classification_report
 from sklearn.model_selection import cross_val_score, RepeatedStratifiedKFold
+from numpy import min, max, mean
 
 # calculate f2-measure
 def f2_measure(y_true, y_pred):
