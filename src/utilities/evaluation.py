@@ -16,6 +16,8 @@ def evaluate_model(X, y, model, metric=f2_measure, splits=5, reps=3, seed=None):
     # evaluate model
     scores = cross_val_score(model, X, y, scoring=scorer, cv=cv, n_jobs=-1)
     
-    print('min:', np.min(scores))
-    print('max:', np.max(scores))
-    print('mean:', np.mean(scores))
+    print('min:', min(scores))
+    print('max:', max(scores))
+    print('mean:', mean(scores))
+    
+    return scores
