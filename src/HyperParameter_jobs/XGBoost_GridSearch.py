@@ -30,7 +30,7 @@ def estimate_time(n_splits, n_repeats, param_grid):
     
     seconds = models * n_splits * n_repeats * 10 / n_cores
 
-    print('Tiempo estimado: {} hrs.'.format(segs/60/60))
+    print('Tiempo estimado: {} hrs.'.format(seconds/60/60))
 
 ### LOAD DATA ###
 dataset = load_fullECAI()
