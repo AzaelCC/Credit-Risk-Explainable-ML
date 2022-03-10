@@ -21,6 +21,17 @@ from sklearn.model_selection import train_test_split
 from sklearn.model_selection import GridSearchCV, RepeatedStratifiedKFold
 from xgboost import XGBClassifier
 
+def estimate_time(n_splits, n_repeats, param_grid):
+    n_cores = 16
+    ## Number of models to fit
+    models = 1
+    for listElem in list(param_grid.values()):
+         models = models * len(listElem)
+    
+    seconds = models * n_splits * n_repeats * 10 / n_cores
+
+    print('Tiempo estimado: {} hrs.'.format(segs/60/60))
+
 ### LOAD DATA ###
 dataset = load_fullECAI()
 # Prep data
@@ -48,9 +59,13 @@ param_grid = dict(scale_pos_weight=scale_pos_weight,
                   n_estimators=n_estimators)
 
 # Define evaluation procedure
-cv = RepeatedStratifiedKFold(n_splits=5, n_repeats=3, random_state=seed)
+n_splits = 5
+n_repeats = 3
+cv = RepeatedStratifiedKFold(n_splits=n_splits, n_repeats=n_repeats, random_state=seed)
+
 # Define grid search
 grid = GridSearchCV(estimator=model, param_grid=param_grid, n_jobs=-1, cv=cv, scoring='roc_auc', verbose=10)
+estimate_time(n_splits, n_repeats, param_grid)
 grid.fit(X_train, y_train)
 
 ### SAVE 
