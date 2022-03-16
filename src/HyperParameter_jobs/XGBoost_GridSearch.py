@@ -52,7 +52,7 @@ y = dataset.loc[:, 'status']
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=.2, random_state=seed, stratify=y)
 
 ### MODEL ###
-model = XGBClassifier(use_label_encoder=False)
+model = XGBClassifier(use_label_encoder=False, tree_method='gpu_hist', gpu_id=0)
 
 ### GRID SEARCH ###
 # Define Grid
@@ -78,7 +78,7 @@ print('n_splits={}\nn_repeats={}\n'.format(n_splits, n_repeats))
 cv = RepeatedStratifiedKFold(n_splits=n_splits, n_repeats=n_repeats, random_state=seed)
 
 # Define grid search
-grid = GridSearchCV(estimator=model, param_grid=param_grid, n_jobs=12, cv=cv, scoring=make_scorer(f1_score), verbose=10)
+grid = GridSearchCV(estimator=model, param_grid=param_grid, n_jobs=2, cv=cv, scoring=make_scorer(f1_score), verbose=10)
 estimate_time(n_splits, n_repeats, param_grid)
 
 now = datetime.now()
