@@ -1,16 +1,24 @@
 ### RANDOM SEED ###
 seed = 0
 
-
-
 ### IMPORT UTILITIES MODULES ###
 import sys
 import os
+import joblib
+from datetime import datetime
 
 utils_path = os.path.abspath("./utilities/")
 sys.path.append(utils_path)
 from load_data import load_fullECAI
 from evaluation import *
+
+### Logging ###
+
+if not os.path.exists('results/XGBoost'):
+    os.makedirs('results/XGBoost')
+
+sys.stdout=open("results/XGBoost/external_file.txt","w")   
+print('seed={}\n'.format(seed))
 
 ### REQUIRED LIBRARIES ###
 import numpy as np
@@ -22,15 +30,16 @@ from sklearn.model_selection import GridSearchCV, RepeatedStratifiedKFold
 from xgboost import XGBClassifier
 
 def estimate_time(n_splits, n_repeats, param_grid):
-    n_cores = 16
+    avg_secs_model = 10
+    n_cores = 12
     ## Number of models to fit
     models = 1
     for listElem in list(param_grid.values()):
          models = models * len(listElem)
     
-    seconds = models * n_splits * n_repeats * 10 / n_cores
+    seconds = models * n_splits * n_repeats * avg_secs_model / n_cores
 
-    print('Tiempo estimado: {} hrs.'.format(seconds/60/60))
+    print('Tiempo estimado: {} hrs.\n'.format(seconds/60/60))
 
 ### LOAD DATA ###
 dataset = load_fullECAI()
@@ -46,10 +55,10 @@ model = XGBClassifier(use_label_encoder=False)
 
 ### GRID SEARCH ###
 # Define Grid
-scale_pos_weight = [1, 10, 25, 50, 75, 99] # Incluir menores a 1
-max_depth = range(4,11)
+scale_pos_weight = [0.8, 1, 5, 8, 10, 15] # Incluir menores a 1. 8 sería el recomendado para el desbalanceo en la base ECAI
+max_depth = range(2,10)
 gamma = [0, .5, 1]
-learning_rate = [.0001, .001, .01, .1, 1] # Reducir el rango
+learning_rate = [.01, 0.1, 0.2, 0.5, 1] # Reducir el rango
 n_estimators = [100, 200, 500]
 
 param_grid = dict(scale_pos_weight=scale_pos_weight, 
@@ -58,23 +67,30 @@ param_grid = dict(scale_pos_weight=scale_pos_weight,
                   learning_rate=learning_rate, 
                   n_estimators=n_estimators)
 
+print('Grid={}\n'.format(param_grid))
+
+
 # Define evaluation procedure
 n_splits = 5
-n_repeats = 3
+n_repeats = 1
+print('n_splits={}\nn_repeats={}\n'.format(n_splits, n_repeats))
 cv = RepeatedStratifiedKFold(n_splits=n_splits, n_repeats=n_repeats, random_state=seed)
 
 # Define grid search
-grid = GridSearchCV(estimator=model, param_grid=param_grid, n_jobs=-1, cv=cv, scoring='roc_auc', verbose=10)
+grid = GridSearchCV(estimator=model, param_grid=param_grid, n_jobs=12, cv=cv, scoring=make_scorer(f1_score), verbose=10)
 estimate_time(n_splits, n_repeats, param_grid)
+
+now = datetime.now()
+print('Inicio: {}'.format(now.strftime("%d-%m-%y_%H-%M-%S")))
+
 grid.fit(X_train, y_train)
 
 ### SAVE 
-import joblib
-from datetime import datetime
+now = datetime.now()
+current_time = now.strftime("%d-%m-%y_%H-%M-%S")
+sys.stdout.close()
+
+joblib.dump(grid, 'results/XGBoost/GridSearchCV1_{}.pkl'.format(current_time))
 
 now = datetime.now()
-current_time = now.strftime("%d-%m-%y_%H:%M:%S")
-
-if not os.path.exists('results/XGBoost'):
-    os.makedirs('figures/XGBoost')
-joblib.dump(grid, 'GridSearchCV1_{}.pkl'.format(current_time))
+print('Fin: {}'.format(now.strftime("%d-%m-%y_%H-%M-%S")))
