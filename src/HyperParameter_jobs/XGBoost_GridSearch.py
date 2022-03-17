@@ -89,9 +89,8 @@ grid.fit(X_train, y_train)
 ### SAVE 
 now = datetime.now()
 current_time = now.strftime("%d-%m-%y_%H-%M-%S")
-sys.stdout.close()
-
 joblib.dump(grid, 'results/XGBoost/GridSearchCV1_{}.pkl'.format(current_time))
 
 now = datetime.now()
 print('Fin: {}'.format(now.strftime("%d-%m-%y_%H-%M-%S")))
+sys.stdout.close()
