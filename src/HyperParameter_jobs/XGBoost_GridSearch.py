@@ -17,7 +17,7 @@ from evaluation import *
 if not os.path.exists('results/XGBoost'):
     os.makedirs('results/XGBoost')
 
-sys.stdout=open("results/XGBoost/external_file.txt","w")   
+sys.stdout = open("results/XGBoost/external_file.txt","w")   
 print('seed={}\n'.format(seed))
 
 ### REQUIRED LIBRARIES ###
@@ -56,20 +56,26 @@ model = XGBClassifier(use_label_encoder=False, tree_method='gpu_hist', gpu_id=0)
 
 ### GRID SEARCH ###
 # Define Grid
-scale_pos_weight = [0.8, 1, 5, 8, 10, 15] # Incluir menores a 1. 8 sería el recomendado para el desbalanceo en la base ECAI
-max_depth = range(2,10)
-gamma = [0, .5, 1]
-learning_rate = [.01, 0.1, 0.2, 0.5, 1] # Reducir el rango
-n_estimators = [100, 200, 500]
+# scale_pos_weight = [0.8, 1, 5, 8, 10, 15] # Incluir menores a 1. 8 sería el recomendado para el desbalanceo en la base ECAI
+# max_depth = range(2,10)
+# gamma = [0, .5, 1]
+# learning_rate = [.01, 0.1, 0.2, 0.5, 1] # Reducir el rango
+# n_estimators = [100, 200, 500]
 
-param_grid = dict(scale_pos_weight=scale_pos_weight, 
-                  max_depth=max_depth, 
-                  gamma=gamma, 
-                  learning_rate=learning_rate, 
-                  n_estimators=n_estimators)
+import argparse
+parser = argparse.ArgumentParser()
+
+parser.add_argument('--scale_pos_weight', nargs='+', type=float)
+parser.add_argument('--max_depth', nargs='+', type=float)
+parser.add_argument('--gamma', nargs='+', type=float)
+parser.add_argument('--learning_rate', nargs='+', type=float)
+parser.add_argument('--n_estimators', nargs='+', type=float)
+
+args = parser.parse_args()
+param_grid = vars(args)
+param_grid = {k: v for k, v in param_grid.items() if v is not None} # Remove nonsupplied values
 
 print('Grid={}\n'.format(param_grid))
-
 
 # Define evaluation procedure
 n_splits = 5
