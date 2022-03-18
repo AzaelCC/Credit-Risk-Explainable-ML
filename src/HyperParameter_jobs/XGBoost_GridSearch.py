@@ -17,10 +17,10 @@ import argparse
 parser = argparse.ArgumentParser()
 
 parser.add_argument('--scale_pos_weight', nargs='+', type=float)
-parser.add_argument('--max_depth', nargs='+', type=float)
+parser.add_argument('--max_depth', nargs='+', type=int)
 parser.add_argument('--gamma', nargs='+', type=float)
 parser.add_argument('--learning_rate', nargs='+', type=float)
-parser.add_argument('--n_estimators', nargs='+', type=float)
+parser.add_argument('--n_estimators', nargs='+', type=int)
 
 args = parser.parse_args()
 param_grid = vars(args)
