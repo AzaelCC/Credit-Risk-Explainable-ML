@@ -35,15 +35,15 @@ n_splits = param_grid.pop('n_splits')
 n_repeats = param_grid.pop('n_repeats')
 
 ### Logging ###
-now = datetime.now()
-start_time = now.strftime("%d-%m-%y_%H-%M-%S")
-print('Inicio: {}'.format(start_time))
+start = datetime.now()
+start_str = start.strftime("%d-%m-%y_%H-%M-%S")
 
 if not os.path.exists('results/XGBoost'):
     os.makedirs('results/XGBoost')
 
-sys.stdout = open("results/XGBoost/GridSearchCV_{}.txt".format(start_time),"w")   
+sys.stdout = open("results/XGBoost/GridSearchCV_{}.txt".format(start_str),"w")   
 
+print('START: {}'.format(start_str))
 print('seed={}\n'.format(seed))
 print('Grid={}\n'.format(param_grid))
 
@@ -100,8 +100,11 @@ estimate_time(n_splits, n_repeats, param_grid)
 grid.fit(X_train, y_train)
 
 ### SAVE ###
-joblib.dump(grid, 'results/XGBoost/GridSearchCV_{}.pkl'.format(start_time))
+joblib.dump(grid, 'results/XGBoost/GridSearchCV_{}.pkl'.format(start_str))
 
-now = datetime.now()
-print('Fin: {}'.format(now.strftime("%d-%m-%y_%H-%M-%S")))
+end = datetime.now()
+print('Elapsed time: {}'.format(end - start))
+
+end_str = end.strftime("%d-%m-%y_%H-%M-%S")
+print('END: {}'.format(end_str))
 sys.stdout.close()
