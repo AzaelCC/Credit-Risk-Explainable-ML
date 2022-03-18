@@ -12,13 +12,29 @@ sys.path.append(utils_path)
 from load_data import load_fullECAI
 from evaluation import *
 
+### Read GRID commandline options
+import argparse
+parser = argparse.ArgumentParser()
+
+parser.add_argument('--scale_pos_weight', nargs='+', type=float)
+parser.add_argument('--max_depth', nargs='+', type=float)
+parser.add_argument('--gamma', nargs='+', type=float)
+parser.add_argument('--learning_rate', nargs='+', type=float)
+parser.add_argument('--n_estimators', nargs='+', type=float)
+
+args = parser.parse_args()
+param_grid = vars(args)
+param_grid = {k: v for k, v in param_grid.items() if v is not None} # Remove nonsupplied values
+
 ### Logging ###
 
 if not os.path.exists('results/XGBoost'):
     os.makedirs('results/XGBoost')
 
 sys.stdout = open("results/XGBoost/external_file.txt","w")   
+
 print('seed={}\n'.format(seed))
+print('Grid={}\n'.format(param_grid))
 
 ### REQUIRED LIBRARIES ###
 import numpy as np
@@ -61,21 +77,6 @@ model = XGBClassifier(use_label_encoder=False, tree_method='gpu_hist', gpu_id=0)
 # gamma = [0, .5, 1]
 # learning_rate = [.01, 0.1, 0.2, 0.5, 1] # Reducir el rango
 # n_estimators = [100, 200, 500]
-
-import argparse
-parser = argparse.ArgumentParser()
-
-parser.add_argument('--scale_pos_weight', nargs='+', type=float)
-parser.add_argument('--max_depth', nargs='+', type=float)
-parser.add_argument('--gamma', nargs='+', type=float)
-parser.add_argument('--learning_rate', nargs='+', type=float)
-parser.add_argument('--n_estimators', nargs='+', type=float)
-
-args = parser.parse_args()
-param_grid = vars(args)
-param_grid = {k: v for k, v in param_grid.items() if v is not None} # Remove nonsupplied values
-
-print('Grid={}\n'.format(param_grid))
 
 # Define evaluation procedure
 n_splits = 5
