@@ -16,6 +16,11 @@ from evaluation import *
 import argparse
 parser = argparse.ArgumentParser()
 
+# CV parameters
+parser.add_argument('-s', '--n_splits', type=int, required=True)
+parser.add_argument('-r', '--n_repeats', type=int, required=True)
+
+# XGBoost parameters
 parser.add_argument('--scale_pos_weight', nargs='+', type=float)
 parser.add_argument('--max_depth', nargs='+', type=int)
 parser.add_argument('--gamma', nargs='+', type=float)
@@ -26,12 +31,18 @@ args = parser.parse_args()
 param_grid = vars(args)
 param_grid = {k: v for k, v in param_grid.items() if v is not None} # Remove nonsupplied values
 
+n_splits = param_grid.pop('n_splits')
+n_repeats = param_grid.pop('n_repeats')
+
 ### Logging ###
+now = datetime.now()
+start_time = now.strftime("%d-%m-%y_%H-%M-%S")
+print('Inicio: {}'.format(start_time))
 
 if not os.path.exists('results/XGBoost'):
     os.makedirs('results/XGBoost')
 
-sys.stdout = open("results/XGBoost/external_file.txt","w")   
+sys.stdout = open("results/XGBoost/GridSearchCV_{}.txt".format(start_time),"w")   
 
 print('seed={}\n'.format(seed))
 print('Grid={}\n'.format(param_grid))
@@ -79,8 +90,6 @@ model = XGBClassifier(use_label_encoder=False, tree_method='gpu_hist', gpu_id=0)
 # n_estimators = [100, 200, 500]
 
 # Define evaluation procedure
-n_splits = 5
-n_repeats = 1
 print('n_splits={}\nn_repeats={}\n'.format(n_splits, n_repeats))
 cv = RepeatedStratifiedKFold(n_splits=n_splits, n_repeats=n_repeats, random_state=seed)
 
@@ -88,15 +97,10 @@ cv = RepeatedStratifiedKFold(n_splits=n_splits, n_repeats=n_repeats, random_stat
 grid = GridSearchCV(estimator=model, param_grid=param_grid, n_jobs=2, cv=cv, scoring=make_scorer(f1_score), verbose=10)
 estimate_time(n_splits, n_repeats, param_grid)
 
-now = datetime.now()
-print('Inicio: {}'.format(now.strftime("%d-%m-%y_%H-%M-%S")))
-
 grid.fit(X_train, y_train)
 
-### SAVE 
-now = datetime.now()
-current_time = now.strftime("%d-%m-%y_%H-%M-%S")
-joblib.dump(grid, 'results/XGBoost/GridSearchCV1_{}.pkl'.format(current_time))
+### SAVE ###
+joblib.dump(grid, 'results/XGBoost/GridSearchCV_{}.pkl'.format(start_time))
 
 now = datetime.now()
 print('Fin: {}'.format(now.strftime("%d-%m-%y_%H-%M-%S")))
