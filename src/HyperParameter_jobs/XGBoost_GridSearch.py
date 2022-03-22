@@ -6,6 +6,7 @@ import sys
 import os
 import joblib
 from datetime import datetime
+from time import time
 
 utils_path = os.path.abspath("./utilities/")
 sys.path.append(utils_path)
@@ -17,6 +18,7 @@ import argparse
 parser = argparse.ArgumentParser()
 
 # CV parameters
+parser.add_argument('-n', '--n_jobs', type=int, required=True)
 parser.add_argument('-s', '--n_splits', type=int, required=True)
 parser.add_argument('-r', '--n_repeats', type=int, required=True)
 
@@ -31,6 +33,7 @@ args = parser.parse_args()
 param_grid = vars(args)
 param_grid = {k: v for k, v in param_grid.items() if v is not None} # Remove nonsupplied values
 
+n_jobs = param_grid.pop('n_jobs')
 n_splits = param_grid.pop('n_splits')
 n_repeats = param_grid.pop('n_repeats')
 
@@ -38,10 +41,10 @@ n_repeats = param_grid.pop('n_repeats')
 start = datetime.now()
 start_str = start.strftime("%d-%m-%y_%H-%M-%S")
 
-if not os.path.exists('results/XGBoost'):
-    os.makedirs('results/XGBoost')
+if not os.path.exists('results/XGBoost/GridSearchCV_{}'.format(start_str)):
+    os.makedirs('results/XGBoost/GridSearchCV_{}'.format(start_str))
 
-sys.stdout = open("results/XGBoost/GridSearchCV_{}.txt".format(start_str),"w")   
+sys.stdout = open("results/XGBoost/GridSearchCV_{}/GridSearchCV_{}.txt".format(start_str,start_str),"w")   
 
 print('START: {}'.format(start_str))
 print('seed={}\n'.format(seed))
@@ -52,10 +55,12 @@ import numpy as np
 import pandas as pd
 from matplotlib import pyplot
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import f1_score
+from sklearn.metrics import f1_score, confusion_matrix
 
 from sklearn.model_selection import GridSearchCV, RepeatedStratifiedKFold
 from xgboost import XGBClassifier
+
+import shap
 
 def estimate_time(n_splits, n_repeats, param_grid):
     avg_secs_model = 10
@@ -68,6 +73,42 @@ def estimate_time(n_splits, n_repeats, param_grid):
     seconds = models * n_splits * n_repeats * avg_secs_model / n_cores
 
     print('Tiempo estimado: {} hrs.\n'.format(seconds/60/60))
+
+    
+def log_metrics_and_explanations(clf, X_val, y_true_val, y_pred_val):
+    cf = confusion_matrix(y_true_val, y_pred_val)
+    f1 = f1_score(y_true_val, y_pred_val)
+    
+    explainer = shap.Explainer(clf)
+    shap_test = explainer(X_val)
+    shap_df = pd.DataFrame(shap_test.values, 
+                           columns=shap_test.feature_names, 
+                           index=X_val.index)
+    to_save = {'params': model.get_params(),
+               'shap': shap_df,
+               'val_idx': X_val.index.values, 
+               'y_pred': y_pred_val,
+               'confusion_matrix': cf, 
+               'f1': f1}
+    
+    ### Save to file
+    timestring = "".join(str(time()).split("."))
+    model_name = 'xgb_' + timestring + '.pkl'
+    
+    if not os.path.exists('results/XGBoost/GridSearchCV_{}/models'.format(start_str)):
+        os.makedirs('results/XGBoost/GridSearchCV_{}/models'.format(start_str))
+    model_savepath = 'results/XGBoost/GridSearchCV_{}/models/{}'.format(start_str, model_name)
+    joblib.dump(to_save, model_savepath)
+    
+    return f1
+    
+    
+def _my_scorer(clf, X_val, y_true_val):
+    # do all the work and return some of the metrics
+    y_pred_val = clf.predict(X_val)
+    f1 = log_metrics_and_explanations(clf, X_val, y_true_val, y_pred_val)
+    
+    return f1
 
 ### LOAD DATA ###
 dataset = load_fullECAI()
@@ -90,17 +131,17 @@ model = XGBClassifier(use_label_encoder=False, tree_method='gpu_hist', gpu_id=0)
 # n_estimators = [100, 200, 500]
 
 # Define evaluation procedure
-print('n_splits={}\nn_repeats={}\n'.format(n_splits, n_repeats))
+print('n_splits={}\n_repeats={}\n'.format(n_splits, n_repeats))
 cv = RepeatedStratifiedKFold(n_splits=n_splits, n_repeats=n_repeats, random_state=seed)
 
 # Define grid search
-grid = GridSearchCV(estimator=model, param_grid=param_grid, n_jobs=2, cv=cv, scoring=make_scorer(f1_score), verbose=10)
+grid = GridSearchCV(estimator=model, param_grid=param_grid, n_jobs=n_jobs, cv=cv, scoring=_my_scorer, verbose=10)
 estimate_time(n_splits, n_repeats, param_grid)
 
 grid.fit(X_train, y_train)
 
 ### SAVE ###
-joblib.dump(grid, 'results/XGBoost/GridSearchCV_{}.pkl'.format(start_str))
+joblib.dump(grid, 'results/XGBoost/GridSearchCV_{}/GridSearchCV_{}.pkl'.format(start_str, start_str))
 
 end = datetime.now()
 print('Elapsed time: {}'.format(end - start))
