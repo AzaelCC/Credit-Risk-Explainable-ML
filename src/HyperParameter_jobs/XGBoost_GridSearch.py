@@ -84,7 +84,7 @@ def log_metrics_and_explanations(clf, X_val, y_true_val, y_pred_val):
     shap_df = pd.DataFrame(shap_test.values, 
                            columns=shap_test.feature_names, 
                            index=X_val.index)
-    to_save = {'params': model.get_params(),
+    to_save = {'params': clf.get_params(),
                'shap': shap_df,
                'val_idx': X_val.index.values, 
                'y_pred': y_pred_val,
