@@ -124,10 +124,10 @@ model = XGBClassifier(use_label_encoder=False, tree_method='gpu_hist', gpu_id=0)
 
 ### GRID SEARCH ###
 # Define Grid
-# scale_pos_weight = [0.8, 1, 5, 8, 10, 15] # Incluir menores a 1. 8 sería el recomendado para el desbalanceo en la base ECAI
-# max_depth = range(2,10)
+# scale_pos_weight = [0.8, 1, 5, 8, 10] # Incluir menores a 1. 8 sería el recomendado para el desbalanceo en la base ECAI
+# max_depth = range(3,10)
 # gamma = [0, .5, 1]
-# learning_rate = [.01, 0.1, 0.2, 0.5, 1] # Reducir el rango
+# learning_rate = [.01, 0.5, 0.1, 0.2, 0.5] # Reducir el rango
 # n_estimators = [100, 200, 500]
 
 # Define evaluation procedure
