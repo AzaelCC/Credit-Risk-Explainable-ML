@@ -11,11 +11,10 @@ def f1_macro(y_true, y_pred):
     return f1_score(y_true, y_pred, average='macro')
  
 # evaluate a model
-def evaluate_model(X, y, model, metric=f2_measure, splits=5, reps=3, seed=None):
+def evaluate_model(X, y, model, scorer=f2_measure, splits=5, reps=3, seed=None):
     # define evaluation procedure
     cv = RepeatedStratifiedKFold(n_splits=splits, n_repeats=reps, random_state=seed)
-    # define the model evaluation metric
-    scorer = make_scorer(metric)
+
     # evaluate model
     scores = cross_val_score(model, X, y, scoring=scorer, cv=cv, n_jobs=-1)
     
