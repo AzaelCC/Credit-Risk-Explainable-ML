@@ -23,3 +23,11 @@ def evaluate_model(X, y, model, scorer=f2_measure, splits=5, reps=3, seed=None):
     print('mean:', mean(scores))
     
     return scores
+    
+    
+def _my_scorer(clf, X_val, y_true_val):
+    # do all the work and return some of the metrics
+    y_pred_val = clf.predict(X_val)
+    f1 = log_metrics_and_explanations(clf, X_val, y_true_val, y_pred_val)
+    
+    return f1
