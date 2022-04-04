@@ -1,0 +1,12 @@
+# Folders
+.ipynb_checkpoints
+.Rproj.user
+Replication
+main
+src/figures
+__pycache__
+
+# Files
+Notes.docx
+xgb*.pkl
+*.pkl
