@@ -1,13 +1,14 @@
 seed = 0
 
 import os
+import sys
 
 utils_path = os.path.abspath("./utilities/")
 sys.path.append(utils_path)
 
-from utilities.load_data import load_fullECAI
-from utilities.evaluation import *
-from utilities.evaluation import _my_scorer
+from load_data import load_fullECAI
+from evaluation import *
+from evaluation import _my_scorer
 
 import numpy as np
 import pandas as pd
@@ -110,11 +111,18 @@ models_paths = ['./results/XGBoost/GridSearchCV_22-03-22_03-27-03/models/best/be
                 './results/Basic/models/LinearDiscriminantAnalysis.pkl',
                 './results/Basic/models/XGBClassifier.pkl']
 
-model_results = joblib.load(models_paths[0])
-shap_df = model_results['shap']
-shap_dist = euclidean_distances(shap_df)
+for model in models_paths:
+    model_results = joblib.load(model)
+    shap_df = model_results['shap']
+    shap_dist = euclidean_distances(shap_df1)
+    normalized_dist = MinMaxScaler().fit_transform(shap_dist)
 
-normalized_dist = MinMaxScaler().fit_transform(shap_dist)
-
-effs, edges, optimal, results = reduce_dimension_efficiency(percent=0.8)
-optimal_cutoff, optimal_eff, optimal_adj, optimal_G = optimal
+    effs, edges, optimal, results = reduce_dimension_efficiency(percent=0.8)
+    optimal_cutoff, optimal_eff, optimal_adj, optimal_G = optimal
+    
+    # Dump data
+    model_folder = '/'.join(model.split('/')[:-1])
+    model_name = model.split('/')[-1].split('.')[0]
+    joblib.dump(results, '{}/{}_reduced_graphs_efficiency.pkl'.format(model_folder, model_name))
+    joblib.dump(optimal, '{}/{}_optimal_graph_efficiency.pkl'.format(model_folder, model_name))
+    
