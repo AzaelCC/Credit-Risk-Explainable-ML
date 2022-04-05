@@ -114,7 +114,7 @@ models_paths = ['./results/XGBoost/GridSearchCV_22-03-22_03-27-03/models/best/be
 for model in models_paths:
     model_results = joblib.load(model)
     shap_df = model_results['shap']
-    shap_dist = euclidean_distances(shap_df1)
+    shap_dist = euclidean_distances(shap_df)
     normalized_dist = MinMaxScaler().fit_transform(shap_dist)
 
     effs, edges, optimal, results = reduce_dimension_efficiency(percent=0.8)
