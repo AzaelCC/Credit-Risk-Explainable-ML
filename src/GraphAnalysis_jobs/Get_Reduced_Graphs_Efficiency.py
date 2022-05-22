@@ -111,9 +111,14 @@ models_paths = ['./results/XGBoost/GridSearchCV_22-03-22_03-27-03/models/best/be
                 './results/Basic/models/LinearDiscriminantAnalysis.pkl',
                 './results/Basic/models/XGBClassifier.pkl']
 
+models_paths = ['./results/Basic1/models/RandomForestClassifier.pkl', 
+                './results/Basic1/models/LogisticRegression.pkl',
+                './results/Basic1/models/LinearDiscriminantAnalysis.pkl',
+                './results/Basic1/models/XGBClassifier.pkl']
+
 for model in models_paths:
     model_results = joblib.load(model)
-    shap_df = model_results['shap']
+    shap_df = model_results['shap_df']
     shap_dist = euclidean_distances(shap_df)
     normalized_dist = MinMaxScaler().fit_transform(shap_dist)
 
