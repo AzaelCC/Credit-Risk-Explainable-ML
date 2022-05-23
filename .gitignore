@@ -1,7 +1,6 @@
 # Folders
 .ipynb_checkpoints
 .Rproj.user
-Replication
 main
 src/figures
 __pycache__
@@ -10,3 +9,5 @@ __pycache__
 Notes.docx
 xgb*.pkl
 *.pkl
+*.png
+*.svg
