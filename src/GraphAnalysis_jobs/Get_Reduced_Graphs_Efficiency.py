@@ -48,14 +48,16 @@ def nodal_eff(g):
     >>> global_eff = mean(eff)
     """
 
-    
-    weights = g.es["weight"][:]
-    sp = (1.0 / np.array(g.shortest_paths_dijkstra(weights=weights)))
-    np.fill_diagonal(sp,0)
-    N=sp.shape[0]
-    ne= (1.0/(N-1)) * np.apply_along_axis(sum,0,sp)
-
-    return ne
+    has_conections = bool(g.es.attributes())
+    if has_conections:
+        weights = g.es["weight"][:]
+        sp = (1.0 / np.array(g.shortest_paths_dijkstra(weights=weights)))
+        np.fill_diagonal(sp,0)
+        N=sp.shape[0]
+        ne= (1.0/(N-1)) * np.apply_along_axis(sum,0,sp)
+        return ne
+    else: 
+        return -1 # Negative to ensure compatibilty
 
 def mean_eff_from_distances(normalized_dist, cutoff, model_folder, model_name):
     """
@@ -73,7 +75,7 @@ def mean_eff_from_distances(normalized_dist, cutoff, model_folder, model_name):
     # Save individual reduced graph
     results = (cutoff, np.mean(eff), edges, reduced_G, adj_matrix)
     cutoff_int = int(cutoff * 100)
-    joblib.dump(results, '{}/reduced_graphs/{}_reduced_{}.pkl'.format(model_folder, model_name, cutoff_int))
+    joblib.dump(results, '{}/reduced_graphs/{}/reduced_{}.pkl'.format(model_folder, model_name, cutoff_int))
     
     
     return cutoff, np.mean(eff), edges, reduced_G, adj_matrix
@@ -88,8 +90,10 @@ def reduce_dimension_efficiency(percent, model_folder, model_name):
     percent: float 0-1
         Percent of minimum global efficiency from max global efficiency
     """
-    # Estimated time with full graph: 2-3hrs
     #cutoffs = np.array(range(1,11))/10
+    cutoffs_100 = np.array(range(1,101, 3))/100
+    cutoffs_10 = np.array(range(1,11))/10
+    cutoffs = np.append(cutoffs_100[0:17], cutoffs_10[4:11])
     
     mean_effs = []
     graphs = []
@@ -136,7 +140,7 @@ for model in models_paths:
     normalized_dist = MinMaxScaler().fit_transform(shap_dist)
     
     # Create appropieate folder
-    path = '{}/reduced_graphs/'.format(model_folder)
+    path = '{}/reduced_graphs/{}/'.format(model_folder, model_name)
     if not os.path.exists(path):
         os.makedirs(path)
 
