@@ -137,7 +137,11 @@ for model in models_paths:
     model_results = joblib.load(model)
     shap_df = model_results['shap_df']
     shap_dist = euclidean_distances(shap_df)
-    normalized_dist = MinMaxScaler().fit_transform(shap_dist)
+    n = shap_df.shape[0]
+    
+    mm = MinMaxScaler()
+    mm.fit(shap_dist.flatten().reshape(-1, 1))
+    normalized_dist = mm.transform(shap_dist.flatten().reshape(-1, 1)).reshape(n, n)
     
     # Create appropieate folder
     path = '{}/reduced_graphs/{}/'.format(model_folder, model_name)
