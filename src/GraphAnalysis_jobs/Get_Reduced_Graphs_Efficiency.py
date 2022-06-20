@@ -23,6 +23,8 @@ import shap
 from igraph import Graph
 import igraph as ig
 
+SAVING_FOLDER_NAME = 'reduced_graphs_log'
+LOG_TRANS = True
 
 def nodal_eff(g):
     """
@@ -75,7 +77,7 @@ def mean_eff_from_distances(normalized_dist, cutoff, model_folder, model_name):
     # Save individual reduced graph
     results = (cutoff, np.mean(eff), edges, reduced_G, adj_matrix)
     cutoff_int = int(cutoff * 100)
-    joblib.dump(results, '{}/reduced_graphs/{}/reduced_{}.pkl'.format(model_folder, model_name, cutoff_int))
+    joblib.dump(results, '{}/{}/{}/reduced_{}.pkl'.format(model_folder, SAVING_FOLDER_NAME, model_name, cutoff_int))
     
     
     return cutoff, np.mean(eff), edges, reduced_G, adj_matrix
@@ -90,10 +92,10 @@ def reduce_dimension_efficiency(percent, model_folder, model_name):
     percent: float 0-1
         Percent of minimum global efficiency from max global efficiency
     """
-    #cutoffs = np.array(range(1,11))/10
-    cutoffs_100 = np.array(range(1,101, 3))/100
-    cutoffs_10 = np.array(range(1,11))/10
-    cutoffs = np.append(cutoffs_100[0:17], cutoffs_10[4:11])
+    cutoffs = np.array(range(1,11))/10
+    # cutoffs_100 = np.array(range(1,101, 3))/100
+    # cutoffs_10 = np.array(range(1,11))/10
+    # cutoffs = np.append(cutoffs_100[0:17], cutoffs_10[4:11])
     
     mean_effs = []
     graphs = []
@@ -130,6 +132,19 @@ models_paths = ['./results/XGBoost/GridSearchCV_22-03-22_03-27-03/models/best/be
                 './results/Basic1/models/LogisticRegression.pkl',
                 './results/Basic1/models/LinearDiscriminantAnalysis.pkl']
 
+def normalize(shap_dist, log_trans=False):
+    n = shap_dist.shape[0]
+    
+    if log_trans:
+        shap_dist = np.log(shap_dist)
+        shap_dist[shap_dist == -np.inf] = 0
+        
+    mm = MinMaxScaler()
+    mm.fit(shap_dist.flatten().reshape(-1, 1))
+    normalized_dist = mm.transform(shap_dist.flatten().reshape(-1, 1)).reshape(n, n)
+    
+    return normalized_dist
+
 for model in models_paths:
     model_folder = '/'.join(model.split('/')[:-1])
     model_name = model.split('/')[-1].split('.')[0]
@@ -137,11 +152,7 @@ for model in models_paths:
     model_results = joblib.load(model)
     shap_df = model_results['shap_df']
     shap_dist = euclidean_distances(shap_df)
-    n = shap_df.shape[0]
-    
-    mm = MinMaxScaler()
-    mm.fit(shap_dist.flatten().reshape(-1, 1))
-    normalized_dist = mm.transform(shap_dist.flatten().reshape(-1, 1)).reshape(n, n)
+    normalized_dist = normalize(shap_dist, log_trans=LOG_TRANS)
     
     # Create appropieate folder
     path = '{}/reduced_graphs/{}/'.format(model_folder, model_name)
