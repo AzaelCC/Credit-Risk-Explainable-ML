@@ -155,7 +155,7 @@ for model in models_paths:
     normalized_dist = normalize(shap_dist, log_trans=LOG_TRANS)
     
     # Create appropieate folder
-    path = '{}/reduced_graphs/{}/'.format(model_folder, model_name)
+    path = '{}/{}/{}/'.format(model_folder, SAVING_FOLDER_NAME, model_name)
     if not os.path.exists(path):
         os.makedirs(path)
 
