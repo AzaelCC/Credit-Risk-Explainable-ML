@@ -137,11 +137,12 @@ def normalize(shap_dist, log_trans=False):
     
     if log_trans:
         shap_dist = np.log(shap_dist)
-        shap_dist[shap_dist == -np.inf] = 0
+        shap_dist[shap_dist == -np.inf] = np.nan
         
     mm = MinMaxScaler()
     mm.fit(shap_dist.flatten().reshape(-1, 1))
-    normalized_dist = mm.transform(shap_dist.flatten().reshape(-1, 1)).reshape(n, n)
+    shap_dist = mm.transform(shap_dist.flatten().reshape(-1, 1)).reshape(n, n)
+    normalized_dist = np.nan_to_num(shap_dist, 0) #Fill diagonal with original zeros
     
     return normalized_dist
 
