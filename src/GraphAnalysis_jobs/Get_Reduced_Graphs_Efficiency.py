@@ -23,8 +23,15 @@ import shap
 from igraph import Graph
 import igraph as ig
 
-SAVING_FOLDER_NAME = 'reduced_graphs_log'
-LOG_TRANS = True
+SAVING_FOLDER_NAME = 'reduced_graphs_1'
+LOG_TRANS = False
+
+#CUTOFFS = np.array(range(1,11))/10
+
+cutoffs_1000 = np.array(range(0,101, 1))/1000
+cutoffs_10 = np.array(range(1,11))/10
+
+CUTOFFS = np.append(cutoffs_1000[1:30], cutoffs_10[2:11])
 
 def nodal_eff(g):
     """
@@ -83,7 +90,7 @@ def mean_eff_from_distances(normalized_dist, cutoff, model_folder, model_name):
     return cutoff, np.mean(eff), edges, reduced_G, adj_matrix
 
     
-def reduce_dimension_efficiency(percent, model_folder, model_name):
+def reduce_dimension_efficiency(percent, model_folder, model_name, cutoffs):
     """
     Plots global (mean) efficienty of network by cutting edges that are too far
     
@@ -92,10 +99,6 @@ def reduce_dimension_efficiency(percent, model_folder, model_name):
     percent: float 0-1
         Percent of minimum global efficiency from max global efficiency
     """
-    cutoffs = np.array(range(1,11))/10
-    # cutoffs_100 = np.array(range(1,101, 3))/100
-    # cutoffs_10 = np.array(range(1,11))/10
-    # cutoffs = np.append(cutoffs_100[0:17], cutoffs_10[4:11])
     
     mean_effs = []
     graphs = []
@@ -118,6 +121,20 @@ def reduce_dimension_efficiency(percent, model_folder, model_name):
     
     return effs, edges, optimals, results
 
+def normalize(shap_dist, log_trans=False):
+    n = shap_dist.shape[0]
+    
+    if log_trans:
+        shap_dist = np.log(shap_dist)
+        shap_dist[shap_dist == -np.inf] = np.nan
+        
+    mm = MinMaxScaler()
+    mm.fit(shap_dist.flatten().reshape(-1, 1))
+    shap_dist = mm.transform(shap_dist.flatten().reshape(-1, 1)).reshape(n, n)
+    normalized_dist = np.nan_to_num(shap_dist, 0) #Fill diagonal with original zeros
+    
+    return normalized_dist
+
 
 dataset = load_fullECAI()
 # Prep data
@@ -132,19 +149,7 @@ models_paths = ['./results/XGBoost/GridSearchCV_22-03-22_03-27-03/models/best/be
                 './results/Basic1/models/LogisticRegression.pkl',
                 './results/Basic1/models/LinearDiscriminantAnalysis.pkl']
 
-def normalize(shap_dist, log_trans=False):
-    n = shap_dist.shape[0]
-    
-    if log_trans:
-        shap_dist = np.log(shap_dist)
-        shap_dist[shap_dist == -np.inf] = np.nan
-        
-    mm = MinMaxScaler()
-    mm.fit(shap_dist.flatten().reshape(-1, 1))
-    shap_dist = mm.transform(shap_dist.flatten().reshape(-1, 1)).reshape(n, n)
-    normalized_dist = np.nan_to_num(shap_dist, 0) #Fill diagonal with original zeros
-    
-    return normalized_dist
+
 
 for model in models_paths:
     model_folder = '/'.join(model.split('/')[:-1])
@@ -161,7 +166,7 @@ for model in models_paths:
         os.makedirs(path)
 
 
-    effs, edges, optimal, results = reduce_dimension_efficiency(0.8, model_folder, model_name)
+    effs, edges, optimal, results = reduce_dimension_efficiency(0.8, model_folder, model_name, CUTOFFS)
     optimal_cutoff, optimal_eff, optimal_adj, optimal_G = optimal
     
     # Dump data
