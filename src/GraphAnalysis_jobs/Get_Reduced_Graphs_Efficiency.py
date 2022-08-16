@@ -23,15 +23,13 @@ import shap
 from igraph import Graph
 import igraph as ig
 
-SAVING_FOLDER_NAME = 'reduced_graphs_1'
+SAVING_FOLDER_NAME = 'reduced_graphs_even_spaces'
 LOG_TRANS = False
-
-#CUTOFFS = np.array(range(1,11))/10
-
-cutoffs_1000 = np.array(range(0,101, 1))/1000
-cutoffs_10 = np.array(range(1,11))/10
-
-CUTOFFS = np.append(cutoffs_1000[1:30], cutoffs_10[2:11])
+CUTOFFS = {'best_xgb': [0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1],
+           'RandomForestClassifier': [0.12,0.13,0.14,0.15,0.16,0.17,0.18,0.19,0.2,0.3,0.4,0.5,1],
+           'LogisticRegression': [0.0035,0.005,0.0065,0.008,0.0095,0.011,0.0125,0.014,0.0155,0.02,0.03,0.04,.2, .4, .6, 1],
+           'LinearDiscriminantAnalysis': [0.0014,0.0016,0.0018,0.002,0.0022,0.0024,0.0026,0.0028,0.003,0.02,0.03,0.04,.2, .4, .6, 1]}
+STR_MULT = 100000 # A number for which all cutoff will be integers and thus avoid extra dots on filenames
 
 def nodal_eff(g):
     """
@@ -83,7 +81,7 @@ def mean_eff_from_distances(normalized_dist, cutoff, model_folder, model_name):
     
     # Save individual reduced graph
     results = (cutoff, np.mean(eff), edges, reduced_G, adj_matrix)
-    cutoff_int = int(cutoff * 100)
+    cutoff_int = int(cutoff * STR_MULT)
     joblib.dump(results, '{}/{}/{}/reduced_{}.pkl'.format(model_folder, SAVING_FOLDER_NAME, model_name, cutoff_int))
     
     
@@ -165,8 +163,8 @@ for model in models_paths:
     if not os.path.exists(path):
         os.makedirs(path)
 
-
-    effs, edges, optimal, results = reduce_dimension_efficiency(0.8, model_folder, model_name, CUTOFFS)
+    cutoffs_model = CUTOFFS[model_name]
+    effs, edges, optimal, results = reduce_dimension_efficiency(0.8, model_folder, model_name, cutoffs_model)
     optimal_cutoff, optimal_eff, optimal_adj, optimal_G = optimal
     
     # Dump data
